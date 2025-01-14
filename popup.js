@@ -54,8 +54,8 @@ const text_size_choose = document.getElementById("text-size-choose");
 
 
 function parse_video_info() {
-    
-    document.getElementById("div_page_title").textContent = video_title;
+    let title = video_title.length > 80 ? video_title.substring(0, 77) + "..." : video_title;
+    document.getElementById("div_page_title").textContent = title;
 
     //const selector_sub_lang = document.getElementById("selector-sub-lang");
     selector_sub_lang.innerHTML = "";
