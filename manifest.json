@@ -1,37 +1,23 @@
 {
-    "name": "Multi Subsitles Youtube",
-    "description": "Display as many subtitles as you like. Different languages, translated, auto-generated. NO dependency on third-party server",
-    "manifest_version": 2,
-    "version": "0.9.5",
-    "homepage_url": "https://garywill.github.io",
-    "developer": {
-        "name": "Garywill",
-        "url": "https://github.com/garywill/multi-subs-yt"
-    },
-    "permissions": [
-        "activeTab",
-        "storage"
-    ],
-    "page_action": {
-        "default_title": "Multi Subsitles Youtube",
-        "browser_style": true,
-        "default_popup": "popup.html",
-        "show_matches": [ "*://www.youtube.com/watch*" ],
-        "default_icon": {
-            "128": "icon.png"
-        }
-    },
-    "background": {
-        "scripts": [
-            "background.js"
-        ]
-    },
+    "manifest_version": 3,
+    "name": "Youtube Multi Subtilte",
+    "version": "1.0.0",
     "icons": {
-        "128": "icon.png"
+      "128": "images/icon-128.png"
     },
-    "browser_specific_settings": {
-        "gecko": {
-            "id": "{e624fdbf-02a8-4f25-90d8-47d23347cf9b}"
-        }
-    }
-} 
+    "background":{
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+            "128": "images/icon-128.png"
+        },
+      "default_state" : "disabled"
+    },
+
+    "permissions": ["activeTab", "scripting", "tabs", "storage"],
+    "host_permissions": ["*://www.youtube.com/watch*"]
+  }
