@@ -1,197 +1,149 @@
-/*
- * By garywill (https://garywill.github.io)
- * https://github.com/garywill/multi-subs-yt
- * 
- */
-
-var onrd = new Array(); //on document ready
-document.addEventListener('DOMContentLoaded', async (event) => {
-
-    for (var i=0; i<onrd.length; ++i)
-    {
-        try{
-            await Promise.resolve( onrd[i]() );
-        }catch(err){
-            console.error(err);
-        }
-    }
-});
 
 var cur_tab;
-
-//var ytplayer;
-var playerResponse;
+var video_title;
 var captionTracks;
 var translationLanguages;
 
-onrd.push(async function(){
-    cur_tab = ( await browser.tabs.query({
-        currentWindow: true, active: true
-    }) ) [0];
+document.getElementById("div_user_choose").style.display="none";
 
-    //console.log (cur_tab.id, cur_tab.title );
-    //document.getElementById("div_page_title").textContent = cur_tab.title;
-    
-    browser.tabs.executeScript(cur_tab.id, {
-        code: `
-            // window.tabid=${cur_tab.id};
-        `,
-        runAt: "document_start"
-    }).then(function() {
-        browser.tabs.executeScript(cur_tab.id, {
-            file: 'inject.js'
-        }) ;
-    });
-    
-    browser.runtime.onMessage.addListener(async function(message, sender) { 
-        // 
-        // console.log("popup receive message", message, sender);
-        // console.log(message);
-        
-        if (sender.tab.id == cur_tab.id) 
-        {
-            
-            playerResponse = null;
-            //console.log("tab id matches");
-            //document.getElementById("div_page_title").textContent = message['title'];
-            //ytplayer = JSON.parse(message['ytplayer_json']);
-            try {
-                playerResponse = JSON.parse(message['playerResponse_json']);
-            }catch (err) {
-                show_refresh();
-            }
-            
-            document.getElementById("div_connecting_tip").style.display="none";
-            
-            //console.log(ytplayer);
-            //console.log(ytplayer.config);
-            if (playerResponse === null || playerResponse === undefined )
-            {
-                show_refresh();
-                return;
-            }
-            
-            //const player_response = ytplayer.config.args.raw_player_response;
-            
-            var ytplayer_videoid = playerResponse.videoDetails.videoId;
-            if ( typeof(ytplayer_videoid) === "string" && cur_tab.url.includes( ytplayer_videoid ) )
-            {
-                //console.log("ytpleyr 与 url 一致");
-            }else
-                show_refresh();
 
-            parse_ytplayer();
-        }
-        
+async function getCurrentTab() {
+    let queryOptions = { active: true, lastFocusedWindow: true };
+    let [tab] = await chrome.tabs.query(queryOptions);
+    return tab;
+}
+getCurrentTab().then(async function(result) {
+    cur_tab = result;
+
+    chrome.runtime.sendMessage({
+        action : "get_subtitles",
+        tabId : cur_tab.id
     });
+
     
 });
 
-function show_refresh() {
-    document.getElementById("div_refresh_tip").style.display="";
-    document.getElementById("div_page_title").style.color="orange";
-}
-function parse_ytplayer()
-{
-    //const player_response = ytplayer.config.args.raw_player_response;
-    
-    if (playerResponse.captions) {
-        captionTracks = playerResponse.captions.playerCaptionsTracklistRenderer.captionTracks;
-        translationLanguages = playerResponse.captions.playerCaptionsTracklistRenderer.translationLanguages;
-    }else{
-        captionTracks = [];
-        translationLanguages = [];
+chrome.runtime.onMessage.addListener(function(message, sender) {
+    if (message.action == "send_subtitles") {
+        
+        if(message.video_info == null) {
+            document.getElementById("div_connecting_tip").innerHTML = "This page has no subtitles!";
+            return;
+        }
+        
+        video_title = message.video_info.title;
+        captionTracks = message.video_info.captionTracks;
+        translationLanguages = message.video_info.translationLanguages;
+        parse_video_info();
+
+        document.getElementById("div_connecting_tip").style.display="none";
+        document.getElementById("div_user_choose").style.display="block";
+        
     }
+
+});
+
+const selector_sub_lang = document.getElementById("selector-sub-lang");
+const cbox_trans = document.getElementById("cbox_trans");
+const selector_trans_lang = document.getElementById("selector-trans-lang");
+
+const cbox_no_background = document.getElementById("background-transparent-check");
+const text_color_choose = document.getElementById("text-color-choose");
+const background_color_choose = document.getElementById("background-color-choose");
+const text_size_choose = document.getElementById("text-size-choose");
+
+
+function parse_video_info() {
     
-    document.getElementById("div_page_title").textContent = playerResponse.videoDetails.title;
-    
-    //console.log(captionTracks);
-    const selector_sub_lang = document.getElementById("selector-sub-lang");
+    document.getElementById("div_page_title").textContent = video_title;
+
+    //const selector_sub_lang = document.getElementById("selector-sub-lang");
     selector_sub_lang.innerHTML = "";
     captionTracks.forEach(async function (c, i) {
-        var option = document.createElement("option");
+        let option = document.createElement("option");
         option.setAttribute("value", i);
         
-        var text = c.name.simpleText;
-    
-        //if (c.isTranslatable)
-        //    text += " (Translatable)";
-        
-        option.textContent = text;
+        option.textContent = c.name.simpleText;
         
         selector_sub_lang.appendChild(option);
+        chrome.storage.local.get(["orig_sub_lang"]).then ((res) => {
+            if (res.orig_sub_lang ==  c.vssId) {
+                selector_sub_lang.value = i;
+            }
+        })
         
-        if (await getStor("orig_sub_lang") == c.vssId)
-            selector_sub_lang.value = i;
     });
     
-    //console.log(translationLanguages);
-    const selector_trans_lang = document.getElementById("selector-trans-lang");
+
+    //const selector_trans_lang = document.getElementById("selector-trans-lang");
     translationLanguages.forEach(async function (c, i) {
-        var option = document.createElement("option");
+        let option = document.createElement("option");
         option.setAttribute("value", i);
         
-        var text = c.languageName.simpleText;
-        
-        option.textContent = text;
+        option.textContent = c.languageName.simpleText;
         
         selector_trans_lang.appendChild(option);
+
+        chrome.storage.local.get(["tran_sub_lang"]).then ((res) => {
+            if (res.tran_sub_lang == c.languageCode) {
+                selector_trans_lang.value = i;
+            }
+        })
         
-        if (await getStor("tran_sub_lang") == c.languageCode)
-            selector_trans_lang.value = i;
     });
+
+    chrome.storage.local.get(["text_color"]).then((res) => {
+        if (!res.text_color) return;
+        text_color_choose.value = res.text_color;
+    });
+    chrome.storage.local.get(["background_color"]).then((res) => {
+        if (!res.background_color) return;
+        if (res.background_color == "transparent") {
+            cbox_no_background.checked = true;
+            background_color_choose.setAttribute("disabled", "true");
+        } else {
+            background_color_choose.value = res.background_color;
+        }
+    });
+    chrome.storage.local.get(["text_size"]).then((res) => {
+        if (!res.text_size) return;
+        text_size_choose.value = res.text_size;
+        document.getElementById("size-value").innerHTML = res.text_size;
+    })
+
 }
 
-onrd.push( function() {
-    document.getElementById("btn_disp_sub").onclick = function() {
 
-        browser.tabs.sendMessage(cur_tab.id, {
-            action: "display_sub",
-            url: get_subtitle_url(),
-            kill_left: true
-        });
-        
-        const selector_sub_lang = document.getElementById("selector-sub-lang");
-        const cbox_trans = document.getElementById("cbox_trans");
-        const selector_trans_lang = document.getElementById("selector-trans-lang");
-        
-        var orig_vssid = captionTracks[selector_sub_lang.value].vssId;
-        setStor("orig_sub_lang", orig_vssid);
-        //console.log(getStor('orig_sub_lang'));
-        
-        if ( cbox_trans.checked) {
-            var tran_lang = translationLanguages[selector_trans_lang.value].languageCode;
-            setStor("tran_sub_lang", tran_lang);
-        }
-    };
-});
+document.getElementById("btn_disp_sub").onclick = function() {
+    let background_color_value;
+    if (cbox_no_background.checked) {
+        background_color_value = "transparent";
+    } else {
+        background_color_value = background_color_choose.value;
+    }
 
-onrd.push( function() {
-    document.getElementById("btn_rm_sub").onclick = function() {
-        browser.tabs.sendMessage(cur_tab.id, {
-            action: "remove_subs",
-        });
-    };
-});
-
-onrd.push( function() {
-    document.getElementById("btn_url").onclick = function() {
-        var url = get_subtitle_url();
-        
-        navigator.clipboard.writeText(url);
-    };
-});
-
-onrd.push(function() {
-    const cbox_trans = document.getElementById("cbox_trans");
-    const selector_trans_lang = document.getElementById("selector-trans-lang");
-    cbox_trans.addEventListener("change", function() {
-        if (cbox_trans.checked)
-            selector_trans_lang.removeAttribute("disabled");
-        else
-            selector_trans_lang.setAttribute("disabled", "true");
+    chrome.runtime.sendMessage({
+        action: "display_sub",
+        url: get_subtitle_url(),
+        tabId : cur_tab.id,
+        textColor: text_color_choose.value,
+        backgroundColor: background_color_value,
+        textSize: text_size_choose.value
     });
-});
+
+    var orig_vssid = captionTracks[selector_sub_lang.value].vssId;
+    chrome.storage.local.set({ "orig_sub_lang": orig_vssid });
+    
+    if ( cbox_trans.checked) {
+        var tran_lang = translationLanguages[selector_trans_lang.value].languageCode;
+        chrome.storage.local.set({"tran_sub_lang": tran_lang});
+    }
+
+    chrome.storage.local.set({ "text_color": text_color_choose.value });
+    chrome.storage.local.set({ "background_color": background_color_value });
+    chrome.storage.local.set({ "text_size": text_size_choose.value });
+
+};
 
 function get_subtitle_url(){
     const selector_sub_lang = document.getElementById("selector-sub-lang");
@@ -207,3 +159,39 @@ function get_subtitle_url(){
     }
     return url;
 }
+
+
+document.getElementById("btn_rm_sub").onclick = function() {
+    chrome.runtime.sendMessage({
+        action: "remove_subs",
+        tabId : cur_tab.id
+    });
+};
+
+
+cbox_trans.addEventListener("change", function() {
+    if (cbox_trans.checked) {
+        selector_trans_lang.removeAttribute("disabled");
+        selector_sub_lang.setAttribute("disabled", "true");
+    }
+        
+    else {
+        selector_trans_lang.setAttribute("disabled", "true");
+        selector_sub_lang.removeAttribute("disabled");
+    }
+        
+});
+
+cbox_no_background.addEventListener("change", function() {
+    if (cbox_no_background.checked) {
+        background_color_choose.setAttribute("disabled", "true");
+    } else {
+        background_color_choose.removeAttribute("disabled");
+    }
+        
+});
+
+text_size_choose.addEventListener("input", function() {
+    document.getElementById("size-value").innerHTML = text_size_choose.value;
+        
+});

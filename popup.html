@@ -1,61 +1,53 @@
 <!DOCTYPE html>
 <html>
-<!--
-/*
- * By garywill (https://garywill.github.io)
- * https://github.com/garywill/multi-subs-yt
- * 
- */
--->
     <head>
         <meta charset="utf-8">
-        <title></title>
-        <script type="text/javascript" src="stor.js"></script>
-        <script type="text/javascript" src="popup.js"></script>
-        <style>
-            button {
-                padding: 0;
-                margin: 0;
-                
-                /* outline: none; */
-            }
-        </style>
+        <link rel="stylesheet" type="text/css" href="popup.css">
+        
+        
     </head>
     <body>
-        <div>
-            <h3 id="div_popup_title" style="text-align:center;">Multi Subtitles Youtube</h3>
-            
-            <div id="div_connecting_tip" style="color: orange; " >
-                Still trying to get web video player info ... 
+        <div id="div_background">
+            <div id="div_title_background">
+                <h3 id="div_popup_title">Youtube Multi Subtitle </h3>
             </div>
+           
             
-            <div id="div_refresh_tip" style="color:red; text-align:center; display:none; " >
-                <b>Refresh</b> the web if subtitles <b>not loaded</b> or <b>loaded wrong</b>
+            <div id="div_connecting_tip">
+                Trying to get web video player info ... 
             </div>
+
             
-            <h3 id="div_page_title"></h3>
-            
-            <div id="div_message"></div>
+            <div id="div_user_choose">
+                <h3 id="div_page_title"></h3>
         
-            <select id="selector-sub-lang" >
-                
-            </select>
+                <select id="selector-sub-lang" > </select>
             
-            <input type="checkbox" id="cbox_trans" >translate to</input>
+                <input type="checkbox" id="cbox_trans" >Translate to</input>
             
-            <select id="selector-trans-lang" disabled="true">
-                
-            </select>
-            <button id="btn_disp_sub">Add Subtitle</button>
-            <button id="btn_rm_sub">Remove All</button>
-            <button id="btn_url" style="display:;">Copy URL</button>
-            
-            <br>
-            <br>
-            <div style="text-align: center;">
-                More addons / Donate: <a target="_blank" href="https://garywill.github.io">Visit Author</a>
+                <select id="selector-trans-lang" disabled="true"> </select>
+
+                <div id="div-color-choose">
+                    Text: <input type="color" id="text-color-choose" value="#ffffff"> </input>
+
+                    Background: <input type="color" id="background-color-choose" value="#000000"> </input>
+
+                    <input type="checkbox" id="background-transparent-check" >No background</input>
+                </div>
+               
+                <div id="div-size-choose">
+                    Text size: <input type="range" id="text-size-choose" max="60" min="10" value="30" step="5"/> <span id="size-value">30</span>
+                </div>
+
+                <div>
+                    <button id="btn_disp_sub">Add Subtitle</button>
+                    <button id="btn_rm_sub">Remove All</button>
+                </div>
             </div>
+            
+            
         </div>
-        <img style="position: absolute; top:-100px ;width: 1px; max-width: 1px; height: 1px; max-height: 1px;" src="https://ia.51.la/go1?id=21192213&pvFlag=1" style="border:none" />
+        
+        <script type="text/javascript" src="popup.js"></script>
     </body>
 </html>
