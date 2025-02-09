@@ -63,9 +63,9 @@ function addListener() {
             mutationList.forEach((mutation) => {
               switch (mutation.type) {
                 case "childList":
-                    if (mutation.addedNodes) {
+                    if (mutation.addedNodes.length) {
                         hideTracks();
-                    } else if (mutation.removedNodes) {
+                    } else if (mutation.removedNodes.length) {
                         showTracks();
                     }
                     break;
